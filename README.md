@@ -17,7 +17,7 @@ Supported Operating Systems:
 
 ### STEP 1: Clone the Toolkit
 ```sh
-git clone https://github.ibm.com/JEFFREY-CHIJIOKE-UCHE/ibm-software-hub-cli-install.git
+git clone https://github.com/IBM-Software-Hub/ibm-software-hub-cpd-cli-install.git
 ```
 
 ### STEP 2: Change to the root directory
