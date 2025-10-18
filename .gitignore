@@ -1,0 +1,82 @@
+# General ignores for the repository
+# --- IGNORE ---
+cpd-cli-workspace/logs/*.log
+cpd-cli-workspace/olm-utils-workspace/work/*.log
+license-accepted-*
+cpd-cli-workspace/logs/*.log
+cpd-cli-linux-*
+
+# Restricting files and directories
+# See https://git-scm.com/docs/gitignore for details
+# See https://www.atlassian.com/git/tutorials/saving-changes/gitignore for details  
+
+.DS_Store
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+*.out
+*.class
+*.jar
+*.war
+*.ear
+*.pyc
+*.pyo
+*.pyd       
+__pycache__/
+node_modules/
+dist/
+build/
+.env
+.vscode/
+.idea/
+*.iml       
+*.suo
+*.ntvs*
+*.njsproj
+*.sln           
+*.db
+*.sqlite    
+*.sqlite3
+coverage/
+*.egg-info/     
+.terraform/ 
+.terragrunt-cache/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+crash.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.vagrant/   
+*.box
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.ovpn
+*.log       
+*.out
+*.pid  
+*.tgz
+*.gz
+*.zip
+*.7z
+*.rar
+*.tar
+*.iso    
+vars.sh
+# End of file
+
+# Allow list
+!README.md
+!LICENSE
+!CHANGELOG.md
+!.gitignore
+# End of allow list
