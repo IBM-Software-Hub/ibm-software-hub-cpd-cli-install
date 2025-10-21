@@ -16,6 +16,79 @@ chmod 777 license_accept.sh
 . ./license_accept.sh
 
 
+##############################################################  
+# Discover the directory that holds the current cpd-cli on PATH
+##############################################################
+discover_cli_bin() {
+  local cpd_bin
+  cpd_bin="$(command -v cpd-cli || true)" || true
+  if [ -z "$cpd_bin" ]; then
+    echo "Friendly Notice: cpd-cli not found on PATH. We need installation." >&2
+    return 0
+  fi
+
+  # Resolve symlinks if possible
+  if command -v readlink >/dev/null 2>&1; then
+    cpd_bin="$(readlink -f "$cpd_bin" 2>/dev/null || echo "$cpd_bin")"
+    return 0
+  fi
+
+  # If INSTALL dir is found, export it  else leave it unset for later use
+  if [ -d "$(dirname "$cpd_bin")" ]; then
+    echo "Friendly Notice: cpd-cli found at: $cpd_bin" >&2
+  else
+    echo "Friendly Notice: cpd-cli path could not be resolved." >&2
+    return 0
+  fi
+  export INSTALL_DIR="$(dirname "$cpd_bin")"
+  echo "INSTALL_DIR set to: $INSTALL_DIR"
+  
+}
+discover_cli_bin
+ 
+
+#################################################
+# Reset function
+#################################################
+# Delete cpd-cli (file), plugins (dir), LICENSES (dir) from $INSTALL_DIR
+cli_reset() {
+  local dir="${INSTALL_DIR:-}"
+
+  # sanity checks: If 
+  if [ -z "$dir" ]; then
+    echo "NOTICE: INSTALL_DIR is not set." >&2
+    return 0
+  fi
+  case "$dir" in
+    "/"|"") echo "ERROR: Refusing to operate on '$dir'." >&2; return 2 ;;
+  esac
+
+  # helper: run command, fallback to sudo if needed
+  _try() { "$@" 2>/dev/null || { command -v sudo >/dev/null && sudo "$@"; }; }
+
+  # clear immutable attr (if present) then remove
+  _zap() {
+    local p="$1"
+    if [ -e "$p" ] || [ -L "$p" ]; then
+      command -v chattr >/dev/null 2>&1 && _try chattr -R -i "$p" || true
+      if [ -d "$p" ] && [ ! -L "$p" ]; then
+        _try rm -rf -- "$p" && echo "Removed directory: $p" || echo "FAILED to remove: $p"
+      else
+        _try rm -f -- "$p" && echo "Removed file/link:  $p" || echo "FAILED to remove: $p"
+      fi
+    else
+      echo "Not found (skipped): $p"
+    fi
+  }
+
+  echo "Cleaning install targets under: $dir"
+  _zap "$dir/cpd-cli"      # file
+  _zap "$dir/plugins"      # directory
+  _zap "$dir/LICENSES"     # directory
+}
+cli_reset
+
+
 ################################################
 # User OS selection
 ################################################
@@ -92,19 +165,7 @@ USER_OS() {
 USER_OS
 
 
-########################################
-# Check that required variables are set
-########################################
-: "${CPD_CLI_VERSION:?Please set CPD_CLI_VERSION variable in vars.sh file}"
-: "${OS_ARCHITECTURE:?Please set OS_ARCHITECTURE variable in vars.sh file}"
-
-###########################################
-# Export variables for use in other scripts
-###########################################
-export CPD_CLI_VERSION="${CPD_CLI_VERSION}"
-export OS_ARCHITECTURE="${OS_ARCHITECTURE}"
-
-
+#################################################
 CPD_INSTALLER_OBJECTS() {
   # Directory where THIS script lives
   local here vars_sh vars_d
@@ -132,11 +193,29 @@ CPD_INSTALLER_OBJECTS() {
   fi
 
   # 3) vars.sh missing -> copy vars.d -> vars.sh (do NOT delete vars.d)
-  cp -f -- "$vars_d" "$vars_sh"
+  if [[ ! -f "$vars_sh" ]]; then
+    echo "vars.sh not found. Creating from vars.d template....."
+    sleep 3
+    cp -f -- "$vars_d" "$vars_sh"
+    chmod +x "$vars_sh" 2>/dev/null || true
+    source ./vars.sh
+    echo "Please provide the missing value of the variables in vars.sh"
+    exit 0
+  fi
+
+  # If vars.sh exists and no placeholder, we're good, source vars.sh and move on:
   chmod +x "$vars_sh" 2>/dev/null || true
-  . ./vars.sh
-  echo "Please provide the missing value of the variables in vars.sh"
-  exit 0
+  . ./vars.sh 
+
+########################################
+# Check that required variables are set
+########################################
+: "${CPD_CLI_VERSION:?Please set CPD_CLI_VERSION variable in vars.sh file}"
+export CPD_CLI_VERSION="${CPD_CLI_VERSION}"
+: "${OS_ARCHITECTURE:?Please set OS_ARCHITECTURE variable in vars.sh file}"
+export OS_ARCHITECTURE="${OS_ARCHITECTURE}"
+ 
+ return 0
 }
 CPD_INSTALLER_OBJECTS
 
