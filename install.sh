@@ -241,7 +241,7 @@ install_swh_cli() {
     # Ask user: upgrade or downgrade
     local choice action
     while :; do
-      echo "Menu: [u] Upgrade cpd-cli to a different SWH release | [d] Downgrade cpd-cli to a different SWH release | [c] Cancel operation"
+      echo "🧾 Menu: [u] Upgrade cpd-cli to a different SWH release | [d] Downgrade cpd-cli to a different SWH release | [c] Cancel"
       read -r -p "🗣️ Do you want to Upgrade, Downgrade, or Cancel? [u/d/c]: " choice
       choice="${choice,,}"  # to lowercase
       case "$choice" in
