@@ -12,15 +12,17 @@ set -Eeuo pipefail
 # to support install, upgrade, and downgrade workflows in an interactive, production-safe
 # manner.
 
+
 #-------------------------------------------------------------
 # Internal worker: install a specific SWH CLI / cpd-cli version
 # Usage: _swh_cli_install_engine <target_swh_version> <action>
 #   target_swh_version: x.y.z (SWH release)
 #   action: "install" | "upgrade" | "downgrade"
 #-------------------------------------------------------------
-echo "-----------------------------------------------------------------"
-echo "IBM Software Hub CLI Installer"
-echo "-----------------------------------------------------------------"
+
+source "$(dirname "$0")/swh_manager.sh"  # for header and summary logic
+header
+
 echo
 _swh_cli_install_engine() {
   local target_swh="$1"
@@ -157,7 +159,7 @@ _swh_cli_install_engine() {
 
   echo "Performing ${action} of cpd-cli in ${dest_dir} (you might be prompted for sudo)..."
 
-  # Remove old LICENSES, plugins, cpd-cli if present
+  # Remove old LICENSES, plugins, cpd-cli if present:
   if [ -e "${dest_dir}/cpd-cli" ] || [ -d "${dest_dir}/plugins" ] || [ -e "${dest_dir}/LICENSES" ]; then
     if ! $SUDO rm -rf "${dest_dir}/cpd-cli" "${dest_dir}/plugins" "${dest_dir}/LICENSES"; then
       echo "ERROR: failed to remove existing cpd-cli files from ${dest_dir}" >&2
@@ -166,7 +168,7 @@ _swh_cli_install_engine() {
     fi
   fi
 
-  # Install new ones
+  # Install new ones:
   if ! $SUDO cp -p "${new_root}/cpd-cli" "${dest_dir}/"; then
     echo "ERROR: failed to copy cpd-cli to ${dest_dir}" >&2
     rm -rf "$tmpdir"
@@ -216,7 +218,7 @@ install_swh_cli() {
   fi
 
   if (( has_cpd_cli == 1 )); then
-    echo "Detected existing cpd-cli installation."
+    echo "✅ Detected existing IBM SWH (cpd) cpd-cli installation on this workstation."
 
     # Get current cpd-cli version info
     local checker
@@ -227,19 +229,20 @@ install_swh_cli() {
       current_cli="$(printf '%s\n' "$checker" | awk -F': ' '/^Version/ {print $2; exit}')"
 
       if [ -n "$current_swh" ]; then
-        echo "Current SWH CLI release version: v${current_swh}"
+        echo "✅ Current SWH (cpd) CLI software hub (cpd) release version: v${current_swh}"
       fi
       if [ -n "$current_cli" ]; then
-        echo "Current cpd-cli operand version: ${current_cli}"
+        echo "✅ Current cpd-cli operand version: ${current_cli}"
       fi
     else
-      echo "WARNING: could not retrieve cpd-cli version information."
+      echo "⚠️ WARNING: could not retrieve cpd-cli version information."
     fi
 
     # Ask user: upgrade or downgrade
     local choice action
     while :; do
-      read -r -p "Do you want to Upgrade, Downgrade, or Cancel? [u/d/c]: " choice
+      echo "Menu: [u] Upgrade cpd-cli to a different SWH release | [d] Downgrade cpd-cli to a different SWH release | [c] Cancel operation"
+      read -r -p "🗣️ Do you want to Upgrade, Downgrade, or Cancel? [u/d/c]: " choice
       choice="${choice,,}"  # to lowercase
       case "$choice" in
         u|upgrade)
@@ -251,11 +254,14 @@ install_swh_cli() {
           break
           ;;
         c|cancel|"")
-          echo "Operation cancelled by user."
+          echo "✅ Operation cancelled by user."
+          echo "✅ Goodbye!"
+          echo "🏦 IBM Corporation, All Rights Reserved (c) $(date +%Y)."
+          echo "$LINER"
           return 0
           ;;
         *)
-          echo "Invalid choice. Please enter 'u' (upgrade), 'd' (downgrade), or 'c' (cancel)."
+          echo "⚠️ Invalid choice. Please enter 'u' (upgrade), 'd' (downgrade), or 'c' (cancel)."
           ;;
       esac
     done
@@ -263,7 +269,7 @@ install_swh_cli() {
     # Ask for target SWH CLI version
     local target_swh
     while :; do
-      read -r -p "Enter target SWH CLI version (x.y.z, e.g. 5.2.2): " target_swh
+      read -r -p "Enter target SWH (cpd) CLI software hub (cpd) release version you need (x.y.z, e.g. 5.2.2): " target_swh
       if printf '%s' "$target_swh" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
         break
       fi
@@ -274,13 +280,13 @@ install_swh_cli() {
     _swh_cli_install_engine "${target_swh}" "${action}"
 
   else
-    echo "cpd-cli is not currently installed on this system."
+    echo "cpd-cli is not currently installed on this workstation."
     echo "This helper will install IBM Software Hub CLI (cpd-cli) for you."
 
     # Ask for target SWH CLI version to install
     local target_swh
     while :; do
-      read -r -p "Enter SWH CLI version to install (x.y.z, e.g. 5.2.2): " target_swh
+      read -r -p "Enter SWH (cpd) CLI software hub (cpd) release version you need (x.y.z, e.g. 5.2.2): " target_swh
       if printf '%s' "$target_swh" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
         break
       fi
@@ -291,3 +297,34 @@ install_swh_cli() {
   fi
 }
 install_swh_cli
+
+
+#----------------------------------------------------------------
+# Summary: Check Type Determinant and print appropriate message:
+#----------------------------------------------------------------
+STOP_TIME=$(date +%s)
+ELAPSED_TIME=$(( STOP_TIME - START_TIME ))
+ACTION_NOTATION="== SUMMARY =="
+if [[ "$CHOICE_CODE" -eq 200 ]]; then
+   export START_TIME="$START_TIME"
+   export ACTION_NOTATION="$ACTION_NOTATION"
+   export ELAPSED_TIME="$ELAPSED_TIME"
+   export STOP_TIME="$STOP_TIME"
+   export THIS_DAY="$THIS_DAY"
+  if (( ELAPSED_TIME < 60 )); then
+    echo "✅ $ACTION_NOTATION"
+    echo "✅ Total time taken for ${OPERATION}: ${ELAPSED_TIME} Seconds"
+    echo "✅ ${OPERATION} date: $THIS_DAY"
+  elif (( ELAPSED_TIME < 120 )); then
+    echo "✅ $ACTION_NOTATION"
+    printf "✅ Total time taken for ${OPERATION}: 1minute:%02dseconds\n" $(( ELAPSED_TIME - 60 ))
+    echo "✅ ${OPERATION} date: $THIS_DAY"
+  else
+    echo "✅ $ACTION_NOTATION"
+    echo "✅ Total time taken for ${OPERATION}: $(( ELAPSED_TIME / 60 )) Minutes"
+    echo "✅ ${OPERATION} date: $THIS_DAY"
+  fi
+else
+  echo "✅ Type Determinant not recognized. Unable to provide summary."
+fi
+echo "$LINER"

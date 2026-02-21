@@ -31,21 +31,6 @@ cd ibm-software-hub-cli-install
 chmod 755 launch.sh && ./xLaunch.sh
 ```
 
-### Samples
-
-#### Sample 1
-![Accept License](./media/sample-1.png)
-
-#### Sample 2
-![Finished Install](./media/sample-2.png)
-
-#### Sample 3
-![Dcline License](./media/sample-3.png)
-
-#### Sample 4
-![Exit Install](./media/sample-4.png)
-
-
 -------------------
 ##### Author
 ###### © 2025 Dr. Jeffrey Chijioke-Uche, IBM Computer Scientist
