@@ -39,7 +39,11 @@ _swh_cli_install_engine() {
   major_minor="${target_swh%.*}"   # e.g. 5.2
   patch="${target_swh##*.}"        # e.g. 2
 
+  # Update to ensure version 5.3.1 is supported in the future
+  # Remember: Use cpd-cli Version 14.3.x with Cloud Pak for Data Version 5.3.x
+  # v14.3.1 Cloud Pak for Data command line interface CPD 5.3.1 Latest.
   case "$major_minor" in
+    5.3) cli_major=14; cli_minor=3 ;;  # SWH 5.3.x → cpd-cli 14.3.x
     5.2) cli_major=14; cli_minor=2 ;;  # SWH 5.2.x → cpd-cli 14.2.x 
     5.1) cli_major=14; cli_minor=1 ;;
     5.0) cli_major=14; cli_minor=0 ;;
@@ -273,7 +277,7 @@ install_swh_cli() {
       if printf '%s' "$target_swh" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
         break
       fi
-      echo "Invalid version format. Please use x.y.z (for example 5.2.2)."
+      echo "Invalid version format. Please use x.y.z (for example 5.x.x)."
     done
 
     echo "You chose to ${action} cpd-cli to SWH release v${target_swh}."
@@ -286,11 +290,11 @@ install_swh_cli() {
     # Ask for target SWH CLI version to install
     local target_swh
     while :; do
-      read -r -p "Enter SWH (cpd) CLI software hub (cpd) release version you need (x.y.z, e.g. 5.2.2): " target_swh
+      read -r -p "Enter SWH (cpd) CLI software hub (cpd) release version you need (x.y.z, e.g. 5.3.1): " target_swh
       if printf '%s' "$target_swh" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
         break
       fi
-      echo "Invalid version format. Please use x.y.z (for example 5.2.2)."
+      echo "Invalid version format. Please use x.y.z (for example 5.3.1)."
     done
 
     _swh_cli_install_engine "${target_swh}" "install"
