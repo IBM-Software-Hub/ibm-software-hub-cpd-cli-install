@@ -28,7 +28,7 @@ cd ibm-software-hub-cli-install
 
 ### STEP 3: Launch the installtion (It will prompt you to accept the license)
 ```sh
-chmod 755 xLaunch.sh && ./xLaunch.sh
+chmod 777 xLaunch.sh && ./xLaunch.sh
 ```
 
 -------------------
