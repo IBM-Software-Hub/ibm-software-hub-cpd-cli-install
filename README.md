@@ -3,17 +3,19 @@
 The script allows you to install the ibm-software-hub-cli so that you can complete administrative tasks on your Red Hat® OpenShift® Container Platform cluster for any IBM watsonx service deployment.
 
 Supported Operating Systems:
-- RHEL 8.xx
-- RHEL 9.xx
-- CentOS 8.xx
-- CentOS 9.xx
-- Ubuntu 20.xx
-- Ubuntu 22.xx
-- Ubuntu 24.xx
+- RHEL 10.x
+- RHEL 8.x
+- RHEL 9.x
+- CentOS 8.x
+- CentOS 9.x
+- Ubuntu 20.x
+- Ubuntu 22.x
+- Ubuntu 24.x
+- Ubuntu 26.x
 - SLES 15.xx
 - SLES 12.xx
-- Windows - WSL2 (Windows Subsystem for Linux 2)
-- MacOS - (with Homebrew installed)
+- Windows Subsystem for Linux 2
+- MacOS
 
 ### STEP 1: Clone the Toolkit
 ```sh
