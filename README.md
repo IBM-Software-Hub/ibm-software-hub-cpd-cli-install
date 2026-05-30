@@ -31,6 +31,16 @@ cd ibm-software-hub-cli-install
 chmod 777 xLaunch.sh && ./xLaunch.sh
 ```
 
+--------------------------------------------------------------------------
+
+### Uninstall
+```sh
+chmod 777 uninstall.sh
+./uninstall.sh
+```
+
+----------------------------------------------------------------------------
+
 -------------------
 ##### Author
 ###### © 2025 Dr. Jeffrey Chijioke-Uche, IBM Computer Scientist

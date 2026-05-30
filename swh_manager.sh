@@ -8,33 +8,77 @@ set -Eeuo pipefail
 # @LICENSE: Apache License 2.0
 # @Company: IBM
 
-echo
-#-------------------------------------------------------------------------------
-START_TIME=$(date +%s)
-CHOICE_CODE=200
-THIS_DAY=$(date +"%B %d, %Y, %-I:%M %P %Z")
-#------------------------------------------------------------------------------
-OPERATION="IBM SWH CLI (cpd-cli) Management"
 
-LINER="_______________________________________________________________________________________________________________________"
-export LINER="$LINER"
+alternative(){
+  #-------------------------------------------------------------------------------
+  START_TIME=$(date +%s)
+  CHOICE_CODE=200
+  THIS_DAY=$(date +"%B %d, %Y, %-I:%M %P %Z")
+  #------------------------------------------------------------------------------
+  OPERATION="IBM SWH CLI (cpd-cli) Tool Management"
+
+  LINER="_______________________________________________________________________________________________________________________"
+  export LINER="$LINER"
+
+  # List of IBM Product tag library:
+  ONBOARDING_FILE="0"
+
+  # if cpd-cli is not installed, say No cpd-cli Installed
+  if ! command -v cpd-cli >/dev/null 2>&1; then
+    export CLI_VERSION="No CPD Version Found"
+    export SWH_RELEASE_VERSION="No SWH Release Version Found"
+  else
+   export CLI_VERSION="CPD CLI VERSION $cpd_cli_version"
+   export SWH_RELEASE_VERSION="SWH Release Version $cpd_release_version"
+  fi
+}
 
 
-# List of IBM Product tag library:
-ONBOARDING_FILE="0"
-# Run once, parse twice
-ver_out="$(cpd-cli version)"
+addon(){
+  echo
+  #-------------------------------------------------------------------------------
+  START_TIME=$(date +%s)
+  CHOICE_CODE=200
+  THIS_DAY=$(date +"%B %d, %Y, %-I:%M %P %Z")
+  #------------------------------------------------------------------------------
+  OPERATION="IBM SWH CLI (cpd-cli) Management"
 
-cpd_cli_version="$(
-  printf '%s\n' "$ver_out" | sed -n 's/^[[:space:]]*Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p'
-)"
-cpd_release_version="$(
-  printf '%s\n' "$ver_out" | sed -n 's/^[[:space:]]*SWH[[:space:]]\+Release[[:space:]]\+Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p'
-)"
+  LINER="_______________________________________________________________________________________________________________________"
+  export LINER="$LINER"
 
-export CLI_VERSION="CPD CLI VERSION $cpd_cli_version"
-export SWH_RELEASE_VERSION="SWH Release Version $cpd_release_version"
 
+  # List of IBM Product tag library:
+  ONBOARDING_FILE="0"
+  # Run once, parse twice
+  ver_out="$(cpd-cli version)"
+
+  cpd_cli_version="$(
+    printf '%s\n' "$ver_out" | sed -n 's/^[[:space:]]*Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p'
+  )"
+  cpd_release_version="$(
+    printf '%s\n' "$ver_out" | sed -n 's/^[[:space:]]*SWH[[:space:]]\+Release[[:space:]]\+Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p'
+  )"
+
+  # if cpd-cli is not installed, say No cpd-cli Installed
+  if ! command -v cpd-cli >/dev/null 2>&1; then
+    export CLI_VERSION="No CPD Version Found"
+    export SWH_RELEASE_VERSION="No SWH Release Version Found"
+  else
+   export CLI_VERSION="CPD CLI VERSION $cpd_cli_version"
+   export SWH_RELEASE_VERSION="SWH Release Version $cpd_release_version"
+  fi
+}
+
+
+# if cpd-cli is not installed, skip the header
+if ! command -v cpd-cli >/dev/null 2>&1; then
+  alternative
+else
+  addon
+fi
+
+
+################# GENERAL #####################################################
 
 export importlin='================================================================================================================================================'
 
@@ -120,7 +164,7 @@ export terraform_product="                            ${identifier6}
 "
 
 
-export header="                            ${identifier7}   
+export addon_load="                                ${identifier7}   
                                      __     ______     __    __        __  __     __  __     ______    
                                     /\ \   /\  == \   /\ \-./  \      /\ \_\ \   /\ \/\ \   /\  == \   
                                     \ \ \  \ \  __<   \ \ \-./\ \     \ \  __ \  \ \ \_\ \  \ \  __<   
@@ -131,10 +175,30 @@ export header="                            ${identifier7}
 "
 
 
-header(){
+header_0(){
     echo "$LINER"
     echo "IBM Software Hub Command Line Interface (CLI) Management Solution Center - $THIS_DAY" 
     echo "$LINER"
-    echo "${header}"
+    echo "${addon_load}"
+    echo "$LINER"
+}
+
+
+export alternative_load="                            ${identifier7}   
+                                     __     ______     __    __        __  __     __  __     ______    
+                                    /\ \   /\  == \   /\ \-./  \      /\ \_\ \   /\ \/\ \   /\  == \   
+                                    \ \ \  \ \  __<   \ \ \-./\ \     \ \  __ \  \ \ \_\ \  \ \  __<   
+                                     \ \_\  \ \_____\  \ \_\ \ \_\     \ \_\ \_\  \ \_____\  \ \_____\ 
+                                      \/_/   \/_____/   \/_/  \/_/      \/_/\/_/   \/_____/   \/_____/ 
+
+                                                        ${SWH_RELEASE_VERSION}
+"
+
+
+header_1(){
+    echo "$LINER"
+    echo "IBM Software Hub Command Line Interface (CLI) Management Solution Center - $THIS_DAY" 
+    echo "$LINER"
+    echo "${alternative_load}"
     echo "$LINER"
 }
