@@ -17,6 +17,20 @@ set -Eeuo pipefail
 #
 # Example:
 #   https://github.com/IBM/cpd-cli/releases/download/v14.3.0_refresh_2/cpd-cli-linux-EE-14.3.0.tgz
+#
+# Important v5.3.1 Hotfix / Patch rule:
+#   PATCH=HOTFIX. Software Hub / CPD 5.3.1 maps to cpd-cli 14.3.1.
+#   For Hotfix 0, use the normal v14.3.1 release tag.
+#   For Hotfix 2, 3, 4, or 5, use release tags v14.3.1.2 through v14.3.1.5
+#   while keeping the archive filename at cpd-cli-<platform>-EE-14.3.1.tgz.
+#
+# Examples:
+#   No Hotfix:
+#     https://github.com/IBM/cpd-cli/releases/download/v14.3.1/cpd-cli-linux-EE-14.3.1.tgz
+#   Hotfix 2:
+#     HOT=2
+#     export HOT="${HOT}"
+#     https://github.com/IBM/cpd-cli/releases/download/v14.3.1.${HOT}/cpd-cli-linux-EE-14.3.1.tgz
 
 
 #-------------------------------------------------------------
@@ -82,6 +96,72 @@ _is_semver_triplet() {
 #-------------------------------------------------------------
 _lower() {
   printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]'
+}
+
+
+#-------------------------------------------------------------
+# Validate CPD / Software Hub 5.3.1 hotfix input.
+# PATCH=HOTFIX. Supported selections are exactly those exposed
+# in the user menu for 5.3.1 install/upgrade flows.
+#-------------------------------------------------------------
+_validate_cpd_531_hotfix() {
+  local hotfix="${1:-}"
+
+  case "$hotfix" in
+    0|2|3|4|5)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+
+#-------------------------------------------------------------
+# Prompt helper for CPD / Software Hub 5.3.1 hotfix selection.
+# The menu is intentionally written to stderr so command
+# substitution captures only the selected numeric hotfix value.
+#-------------------------------------------------------------
+_prompt_for_cpd_531_hotfix() {
+  local hotfix=""
+
+  while :; do
+    {
+      echo "Which 5.3.1 Hotfix?"
+      echo "0 for No Hotfix"
+      echo "2 for Hotfix 2"
+      echo "3 for Hotfix 3"
+      echo "4 for Hotfix 4"
+      echo "5 for Hotfix 5"
+    } >&2
+
+    read -r -p "Enter 0, 2, 3, 4, or 5: " hotfix
+
+    if _validate_cpd_531_hotfix "$hotfix"; then
+      printf '%s\n' "$hotfix"
+      return 0
+    fi
+
+    echo "Invalid hotfix selection. Please enter 0, 2, 3, 4, or 5." >&2
+  done
+}
+
+
+#-------------------------------------------------------------
+# Return a 5.3.1 hotfix selection only for install/upgrade flows.
+# Downgrade and all other versions keep the existing flow and use
+# normal release URL behavior.
+#-------------------------------------------------------------
+_get_cpd_531_hotfix_for_action() {
+  local target_swh="${1:-}"
+  local action="${2:-}"
+
+  if [ "$target_swh" = "5.3.1" ] && { [ "$action" = "install" ] || [ "$action" = "upgrade" ]; }; then
+    _prompt_for_cpd_531_hotfix
+  else
+    printf '0\n'
+  fi
 }
 
 
@@ -216,20 +296,37 @@ _detect_cpd_cli_platform() {
 #   target_swh:   Software Hub / CPD version, for example 5.3.0
 #   cli_version:  cpd-cli version, for example 14.3.0
 #   archive:      archive filename, for example cpd-cli-linux-EE-14.3.0.tgz
+#   hotfix:       5.3.1 hotfix selector: 0, 2, 3, 4, or 5
 #
 # v5.3.0 special case:
 #   target_swh 5.3.0 maps to cpd-cli 14.3.0 and uses GitHub tag:
 #   v14.3.0_refresh_2
+#
+# v5.3.1 hotfix special case:
+#   target_swh 5.3.1 maps to cpd-cli 14.3.1.
+#   hotfix 0 uses tag v14.3.1.
+#   hotfix 2-5 use tags v14.3.1.2 through v14.3.1.5,
+#   while the archive filename remains cpd-cli-<platform>-EE-14.3.1.tgz.
 #-------------------------------------------------------------
 _build_cpd_cli_url() {
   local target_swh="$1"
   local cli_version="$2"
   local archive="$3"
+  local hotfix="${4:-0}"
 
   case "$target_swh" in
     5.3.0)
       printf 'https://github.com/IBM/cpd-cli/releases/download/v%s_refresh_2/%s\n' \
         "$cli_version" "$archive"
+      ;;
+    5.3.1)
+      if [ "$hotfix" != "0" ]; then
+        printf 'https://github.com/IBM/cpd-cli/releases/download/v%s.%s/%s\n' \
+          "$cli_version" "$hotfix" "$archive"
+      else
+        printf 'https://github.com/IBM/cpd-cli/releases/download/v%s/%s\n' \
+          "$cli_version" "$archive"
+      fi
       ;;
     *)
       printf 'https://github.com/IBM/cpd-cli/releases/download/v%s/%s\n' \
@@ -283,6 +380,7 @@ _download_file() {
 _swh_cli_install_engine() {
   local target_swh="${1:-}"
   local action="${2:-}"
+  local hotfix="${3:-0}"
 
   if ! _is_semver_triplet "$target_swh"; then
     _error "invalid SWH version '${target_swh}'. Expected x.y.z."
@@ -297,6 +395,24 @@ _swh_cli_install_engine() {
       return 1
       ;;
   esac
+
+  if [ "$target_swh" = "5.3.1" ]; then
+    if ! _validate_cpd_531_hotfix "$hotfix"; then
+      _error "invalid CPD 5.3.1 hotfix '${hotfix}'. Expected 0, 2, 3, 4, or 5."
+      return 1
+    fi
+
+    if [ "$action" = "downgrade" ] && [ "$hotfix" != "0" ]; then
+      _error "CPD 5.3.1 hotfix selection is supported for install and upgrade actions only."
+      return 1
+    fi
+
+    HOT="$hotfix"
+    export HOT
+  elif [ "$hotfix" != "0" ]; then
+    _error "hotfix selection applies only to SWH / CPD release 5.3.1."
+    return 1
+  fi
 
   local SUDO=""
   if [ "$(id -u)" -ne 0 ]; then
@@ -314,11 +430,19 @@ _swh_cli_install_engine() {
   echo "Target SWH CLI release: v${target_swh}"
   echo "Derived cpd-cli package version: ${cli_version}"
 
+  if [ "$target_swh" = "5.3.1" ]; then
+    if [ "${HOT}" = "0" ]; then
+      echo "Selected CPD 5.3.1 Hotfix/Patch: 0 (No Hotfix)"
+    else
+      echo "Selected CPD 5.3.1 Hotfix/Patch: ${HOT}"
+    fi
+  fi
+
   local platform edition archive url
   platform="$(_detect_cpd_cli_platform)"
   edition="EE"
   archive="cpd-cli-${platform}-${edition}-${cli_version}.tgz"
-  url="$(_build_cpd_cli_url "$target_swh" "$cli_version" "$archive")"
+  url="$(_build_cpd_cli_url "$target_swh" "$cli_version" "$archive" "$hotfix")"
 
   echo "Detected platform: ${platform}"
   echo "Selected edition: ${edition}"
@@ -504,20 +628,22 @@ install_swh_cli() {
       esac
     done
 
-    local target_swh
+    local target_swh hotfix
     target_swh="$(_prompt_for_swh_version "Enter target SWH / CPD CLI release version you need, for example 5.3.0 or 5.3.1: ")"
+    hotfix="$(_get_cpd_531_hotfix_for_action "$target_swh" "$action")"
 
     echo "You chose to ${action} cpd-cli to SWH / CPD release v${target_swh}."
-    _swh_cli_install_engine "$target_swh" "$action"
+    _swh_cli_install_engine "$target_swh" "$action" "$hotfix"
 
   else
     echo "cpd-cli is not currently installed on this workstation."
     echo "This helper will install IBM Software Hub CLI / CPD CLI for you."
 
-    local target_swh
+    local target_swh hotfix
     target_swh="$(_prompt_for_swh_version "Enter SWH / CPD CLI release version you need, for example 5.3.0 or 5.3.1: ")"
+    hotfix="$(_get_cpd_531_hotfix_for_action "$target_swh" "install")"
 
-    _swh_cli_install_engine "$target_swh" "install"
+    _swh_cli_install_engine "$target_swh" "install" "$hotfix"
   fi
 }
 
