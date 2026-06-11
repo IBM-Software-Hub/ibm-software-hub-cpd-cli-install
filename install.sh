@@ -21,7 +21,7 @@ set -Eeuo pipefail
 # Important v5.3.1 Hotfix / Patch rule:
 #   PATCH=HOTFIX. Software Hub / CPD 5.3.1 maps to cpd-cli 14.3.1.
 #   For Hotfix 0, use the normal v14.3.1 release tag.
-#   For Hotfix 2, 3, 4, or 5, use release tags v14.3.1.2 through v14.3.1.5
+#   For Hotfix 2, 3, 4, 5, or 6, use release tags v14.3.1.2 through v14.3.1.6
 #   while keeping the archive filename at cpd-cli-<platform>-EE-14.3.1.tgz.
 #
 # Examples:
@@ -108,7 +108,7 @@ _validate_cpd_531_hotfix() {
   local hotfix="${1:-}"
 
   case "$hotfix" in
-    0|2|3|4|5)
+    0|2|3|4|5|6)
       return 0
       ;;
     *)
@@ -134,16 +134,17 @@ _prompt_for_cpd_531_hotfix() {
       echo "3 for Hotfix 3"
       echo "4 for Hotfix 4"
       echo "5 for Hotfix 5"
+      echo "6 for Hotfix 6 (if available)"
     } >&2
 
-    read -r -p "Enter 0, 2, 3, 4, or 5: " hotfix
+    read -r -p "Enter 0, 2, 3, 4, 5, or 6: " hotfix
 
     if _validate_cpd_531_hotfix "$hotfix"; then
       printf '%s\n' "$hotfix"
       return 0
     fi
 
-    echo "Invalid hotfix selection. Please enter 0, 2, 3, 4, or 5." >&2
+    echo "Invalid hotfix selection. Please enter 0, 2, 3, 4, 5, or 6." >&2
   done
 }
 
@@ -296,7 +297,7 @@ _detect_cpd_cli_platform() {
 #   target_swh:   Software Hub / CPD version, for example 5.3.0
 #   cli_version:  cpd-cli version, for example 14.3.0
 #   archive:      archive filename, for example cpd-cli-linux-EE-14.3.0.tgz
-#   hotfix:       5.3.1 hotfix selector: 0, 2, 3, 4, or 5
+#   hotfix:       5.3.1 hotfix selector: 0, 2, 3, 4, 5, or 6
 #
 # v5.3.0 special case:
 #   target_swh 5.3.0 maps to cpd-cli 14.3.0 and uses GitHub tag:
@@ -305,7 +306,7 @@ _detect_cpd_cli_platform() {
 # v5.3.1 hotfix special case:
 #   target_swh 5.3.1 maps to cpd-cli 14.3.1.
 #   hotfix 0 uses tag v14.3.1.
-#   hotfix 2-5 use tags v14.3.1.2 through v14.3.1.5,
+#   hotfix 2-6 use tags v14.3.1.2 through v14.3.1.6,
 #   while the archive filename remains cpd-cli-<platform>-EE-14.3.1.tgz.
 #-------------------------------------------------------------
 _build_cpd_cli_url() {
@@ -398,7 +399,7 @@ _swh_cli_install_engine() {
 
   if [ "$target_swh" = "5.3.1" ]; then
     if ! _validate_cpd_531_hotfix "$hotfix"; then
-      _error "invalid CPD 5.3.1 hotfix '${hotfix}'. Expected 0, 2, 3, 4, or 5."
+      _error "invalid CPD 5.3.1 hotfix '${hotfix}'. Expected 0, 2, 3, 4, 5, or 6."
       return 1
     fi
 
